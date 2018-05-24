@@ -1,39 +1,56 @@
+var ItemModel = require("../models/item");
+
 module.exports= function(app){
-    let items=[
-                {id:1, name:'joy'},
-                {id:2, name: 'peace'},
-                { id:3, name:'gentleness'}
-         ];
 
     app.get('/items', (req, res)=>{
-        res.send({
-            data: items,
-        })
+        ItemModel.find((err, objects) => {
+            if (err) {
+                res.send("Error Getting Items")  
+            }else{
+                res.send({
+                    data: objects,
+                })
+            }
+          })
     });
 
-    app.post('/items/:name', (req, res)=>{
-        let params = req.params;
-        console.log(params);
-        let name= params.name
-        items.push(name);
-       res.send({
-           items,
-           message: 'successfully created'
+    app.post('/items', (req, res)=>{
+        let itemObject = req.body.item;
+
+        var newItem = new ItemModel(itemObject);
+        newItem.save((err, created) => {
+            if (err) {
+              res.send("Error Creating New Item")  
+            }else{
+                res.send({
+                    created,
+                    message: 'successfully created'
+                })
+            }
         })
     });
 
     app.put('/items/:id', (req, res)=>{
         let id = req.params.id;
-        let name= req.body.name;
-        for (item in items){
-            if(items[item].id == id){
-                items[item].name = name
-                console.log(item)
-            }
-        }
-        console.log(item)
-        res.send({
-            message: id  + 'Updated Successfully'
-        })
+        let itemObject = req.body.item;
+
+        ItemModel.where({ _id: id }).update(itemObject).exec((err, updated) => {
+            res.send({
+                // item,
+                message: 'Updated Successfully'
+            })
+        });
     })
+
+    app.delete('/items/:id', (req, res)=>{
+        let id = req.params.id;
+
+        ItemModel.where({ _id: id }).remove().exec((err, updated) => {
+            res.send({
+                // item,
+                message: 'Delete Successfully'
+            })
+        });
+    })
+
 }
